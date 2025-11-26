@@ -19,13 +19,13 @@ Hasil analisis menunjukkan variasi kinerja sistem yang signifikan antara hari ke
 | Hari | Utilisasi Sistem ($\rho$) | Keterangan |
 | :--- | :--- | :--- |
 | **Senin - Kamis** | **31,7% - 42,2%** | **Sangat Stabil**. Sistem memiliki kapasitas yang cukup dan pengguna umumnya dilayani tanpa antrean yang berarti. |
-| **Jumat** | **83,3%** | **Mendekati Batas Kapasitas**. Terjadi lonjakan beban sistem yang drastis.Hail ini dipicu oleh tingginya aktivitas kampus yaitu acara Riuh Wisuda. |
+| **Jumat** | **83,3%** | **Mendekati Batas Kapasitas**. Terjadi lonjakan beban sistem yang drastis.Hal ini dipicu oleh tingginya aktivitas kampus yaitu acara Riuh Wisuda. |
 
 ### 3. Metrik Antrean dan Waktu Tunggu
 
 | Hari | Rata-rata Panjang Antrean ($L_q$) | Rata-rata Waktu Tunggu ($W_q$) |
 | :--- | :--- | :--- |
-| **Senin - Kamis** | $\leq$ 0.8 orang | Sangat singkat, $\leq$ 1.2 menit |
+| **Senin - Kamis** | $\leq$ 0.8 orang | $\leq$ 1.2 menit |
 | **Jumat** | 4.167 orang | 6.522 menit |
 
 Lonjakan pada hari Jumat ini mengindikasikan penurunan signifikan dalam Kualitas Layanan (*QoS*) pada waktu-waktu kritis.
