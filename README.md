@@ -30,7 +30,7 @@ Hasil analisis menunjukkan variasi kinerja sistem yang signifikan antara hari ke
 
 Lonjakan pada hari Jumat ini mengindikasikan penurunan signifikan dalam Kualitas Layanan (*QoS*) pada waktu-waktu kritis.
 
-## Detail Data dan Metode
+## Data dan Metode
 
 * **Jenis Data:** Data Primer
 * **Teknik Pengumpulan Data:** Observasi Langsung  di lokasi ATM BNI ITERA.
