@@ -1,6 +1,6 @@
 # Analisis Kinerja Antrean ATM BNI ITERA Menggunakan Model M/M/1
 
-Sebuah studi kasus pemodelan stokastik untuk mengevaluasi efisiensi layanan ATM di lingkungan kampus Institut Teknologi Sumatera (ITERA).
+Sebuah studi kasus pemodelan stokastik untuk mengevaluasi efisiensi layanan ATM BNI di lingkungan kampus Institut Teknologi Sumatera (ITERA).
 
 ## Ringkasan Proyek
 
@@ -48,3 +48,9 @@ Berdasarkan hasil observasi dan analisis:
 ---
 
 *Proyek ini disusun untuk memenuhi Tugas Besar Mata Kuliah Pemodelan Stokastik, Program Studi Sains Data, Institut Teknologi Sumatera (ITERA).*
+
+**Kelompok 12 Stokastik RA**
+* Ibrahim Al Kahfi - 122450100 
+* Novelia Adinda - 122450104 
+* Rendra Eka Prayoga - 122450112 
+* Smertniki Javid Ahmedthian - 122450115
