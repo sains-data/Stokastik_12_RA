@@ -25,8 +25,8 @@ Hasil analisis menunjukkan variasi kinerja sistem yang signifikan antara hari ke
 
 | Hari | Rata-rata Panjang Antrean ($L_q$) | Rata-rata Waktu Tunggu ($W_q$) |
 | :--- | :--- | :--- |
-| **Senin - Kamis** | $\leq$ 0.8 orang | Sangat singkat, $\leq$ 1,2 menit |
-| **Jumat** | 4.167 orang | 6,522 menit |
+| **Senin - Kamis** | $\leq$ 0.8 orang | Sangat singkat, $\leq$ 1.2 menit |
+| **Jumat** | 4.167 orang | 6.522 menit |
 
 Lonjakan pada hari Jumat ini mengindikasikan penurunan signifikan dalam Kualitas Layanan (*QoS*) pada waktu-waktu kritis.
 
