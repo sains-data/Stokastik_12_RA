@@ -1,0 +1,316 @@
+---
+title: "TUBES PEMSTOK"
+author: "Kelompok 12"
+date: "2025-11-18"
+output: pdf_document
+---
+
+```{r}
+# Load Library 
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tidyr)
+library(lubridate)
+```
+
+```{r}
+# Load data
+data <- read_csv("C:/Users/Novelia Adinda/Downloads/kodingan dl/antrean_bni.csv", show_col_types = FALSE)
+
+# Konversi waktu ke datetime
+data <- data %>%
+  mutate(
+    Waktu_Masuk_Antrean = hms(Waktu_Masuk_Antrean),
+    Waktu_Selesai_Dilayani = hms(Waktu_Selesai_Dilayani)
+  )
+```
+
+```{r}
+# Tabel deskripsi data
+tabel_deskripsi <- hasil_per_sesi %>%
+  select(Hari, Sesi, n_customers) %>%
+  pivot_wider(names_from = Sesi, values_from = n_customers) %>%
+  mutate(Total = rowSums(across(where(is.numeric))))
+
+print(tabel_deskripsi)
+```
+
+```{r}
+# Pola Kedatangan Pelanggan per Sesi tiap harinya
+
+hasil_per_sesi %>%
+  mutate(Hari = factor(Hari, levels = c("Senin", "Selasa", "Rabu", "Kamis", "Jumat"))) %>%
+  ggplot(aes(x = Hari, y = n_customers, fill = Sesi)) +
+  geom_col(position = "dodge", alpha = 0.8) +
+  geom_text(aes(label = n_customers), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5, size = 3) +  # TAMBAH INI
+  labs(
+    title = "Distribusi Jumlah Pelanggan per Hari dan Sesi",
+    x = "Hari", 
+    y = "Jumlah Pelanggan",
+    fill = "Sesi"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1", 
+                    labels = c("Sesi 1 (10-11)", "Sesi 2 (12-13)", "Sesi 3 (15-16)")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1)))
+```
+
+```{r}
+# Statistik deskriptif dari data aktual
+statistik_aktual <- data %>%
+  summarise(
+    Total_Observasi = n(),
+    Rata_rata_Waktu_Pelayanan = mean(Waktu_Pelayanan_menit),
+    Rata_rata_Waktu_Tunggu = mean(Waktu_Tunggu_menit),
+    Deviasi_Standar_Waktu_Pelayanan = sd(Waktu_Pelayanan_menit)
+  )
+
+# Tampilkan dalam format yang rapi untuk laporan
+cat("**Ringkasan Statistik:**\n")
+cat("- Total observasi:", statistik_aktual$Total_Observasi, "transaksi\n")
+cat("- Rata-rata waktu pelayanan:", round(statistik_aktual$Rata_rata_Waktu_Pelayanan, 2), "menit\n")
+cat("- Rata-rata waktu tunggu:", round(statistik_aktual$Rata_rata_Waktu_Tunggu, 2), "menit\n")
+cat("- Deviasi standar waktu pelayanan:", round(statistik_aktual$Deviasi_Standar_Waktu_Pelayanan, 2), "menit\n")
+
+# Tampilkan juga statistik lengkap
+print("Statistik Lengkap:")
+print(statistik_aktual)
+```
+
+# TEORI M/M/1
+```{r}
+# Hitung teori M/M/1 per hari 
+hasil_per_hari <- data %>%
+  group_by(Hari) %>%
+  summarise(
+    total_customers = n(),
+    
+    # λ = total kedatangan per total jam observasi
+    # Asumsi: pengamatan 3 sesi × 1 jam = 3 jam per hari
+    total_hours = 3,
+    lambda_per_hour = total_customers / total_hours,
+    
+    # μ = 1 / rata-rata waktu pelayanan (dalam jam)
+    mean_service_minutes = mean(Waktu_Pelayanan_menit),
+    mean_service_hours = mean_service_minutes / 60,
+    mu_per_hour = 1 / mean_service_hours,
+    
+    # Waktu tunggu observasi
+    mean_wait_obs = mean(Waktu_Tunggu_menit)
+  ) %>%
+  mutate(
+    # Utilisasi sistem
+    rho = lambda_per_hour / mu_per_hour,
+    
+    # Hanya hitung teori jika ρ < 1 (sistem stabil)
+    Wq_theory = ifelse(rho < 1, rho / (mu_per_hour - lambda_per_hour) * 60, NA),
+    Ws_theory = ifelse(rho < 1, Wq_theory + mean_service_minutes, NA),
+    Lq_theory = ifelse(rho < 1, (rho^2) / (1 - rho), NA),
+    Ls_theory = ifelse(rho < 1, rho / (1 - rho), NA)
+  )
+
+print(hasil_per_hari)
+```
+
+```{r}
+# Analisis per sesi
+hasil_per_sesi <- data %>%
+  group_by(Hari, Sesi) %>%
+  summarise(
+    n_customers = n(),
+    
+    # Setiap sesi = 1 jam observasi
+    lambda_per_hour = n_customers / 1,
+    
+    # μ dari rata-rata waktu pelayanan
+    mean_service_minutes = mean(Waktu_Pelayanan_menit),
+    mean_service_hours = mean_service_minutes / 60,
+    mu_per_hour = 1 / mean_service_hours,
+    
+    # Statistik observasi
+    mean_wait_obs = mean(Waktu_Tunggu_menit),
+    max_wait_obs = max(Waktu_Tunggu_menit)
+  ) %>%
+  mutate(
+    rho = lambda_per_hour / mu_per_hour,
+    
+    # Teori hanya untuk sistem stabil
+    Wq_theory = ifelse(rho < 1, rho / (mu_per_hour - lambda_per_hour) * 60, NA),
+    Ws_theory = ifelse(rho < 1, Wq_theory + mean_service_minutes, NA),
+    Lq_theory = ifelse(rho < 1, (rho^2) / (1 - rho), NA),
+    Ls_theory = ifelse(rho < 1, rho / (1 - rho), NA),
+    
+    # Kategori beban sistem
+    status = case_when(
+      rho < 0.7 ~ "Ringan",
+      rho < 0.9 ~ "Sedang", 
+      rho < 1 ~ "Padat",
+      TRUE ~ "OVERLOAD"
+    )
+  )
+
+print(hasil_per_sesi)
+```
+# VISUALISASI
+```{r}
+# 1. Distribusi Waktu Pelayanan
+
+# Hitung parameter untuk kurva eksponensial
+mean_service <- mean(data$Waktu_Pelayanan_menit)
+rate_exp <- 1/mean_service
+
+ggplot(data, aes(x = Waktu_Pelayanan_menit)) +
+  geom_histogram(aes(y = ..density..), bins = 15, 
+                 fill = "lightblue", alpha = 0.7, color = "black") +
+  stat_function(fun = dexp, args = list(rate = rate_exp), 
+                color = "red", size = 1.2, linetype = "solid") +
+  labs(
+    title = "Distribusi Waktu Pelayanan ATM BNI ITERA",
+    subtitle = "Histogram Data Observasi vs Kurva Distribusi Eksponensial Teoritis",
+    x = "Waktu Pelayanan (menit)",
+    y = "Densitas"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 10)
+  )
+```
+
+
+```{r}
+# 2. Tingkat Utilisasi Sistem (ρ) per Hari
+
+hasil_rho_harian <- hasil_per_sesi %>%
+  group_by(Hari) %>%
+  summarise(
+    rho_rata2 = mean(rho, na.rm = TRUE),
+    status = ifelse(any(rho >= 1), "OVERLOAD", "STABIL")
+  )
+
+ggplot(hasil_rho_harian, aes(x = reorder(Hari, rho_rata2), y = rho_rata2, fill = status)) +
+  geom_col() +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red", size = 1) +
+  geom_text(aes(label = round(rho_rata2, 3)), vjust = -0.5, size = 3.5) +
+  scale_fill_manual(values = c("OVERLOAD" = "red", "STABIL" = "blue")) +
+  labs(
+    title = "Tingkat Utilisasi Server (ρ) Rata-rata per Hari",
+    subtitle = "Garis merah menunjukkan ρ = 1 (kapasitas maksimal sistem)",
+    x = "Hari",
+    y = "ρ (lambda/mu)",
+    fill = "Status Sistem"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 12)
+  )
+
+```
+
+```{r}
+# 3. Perbandingan Waktu Tunggu Observasi vs Teori
+data_stabil <- hasil_per_sesi %>%
+  filter(rho < 0.95 & !is.na(Wq_theory)) %>%
+  select(Hari, Sesi, mean_wait_obs, Wq_theory) %>%
+  pivot_longer(cols = c(mean_wait_obs, Wq_theory), 
+               names_to = "Tipe_Waktu", values_to = "Menit") %>%
+  mutate(
+    Tipe_Waktu = ifelse(Tipe_Waktu == "mean_wait_obs", "Observasi", "Teori M/M/1"),
+    Hari_Sesi = paste(Hari, Sesi)
+  )
+
+if(nrow(data_stabil) > 0) {
+  ggplot(data_stabil, aes(x = reorder(Hari_Sesi, Menit), y = Menit, fill = Tipe_Waktu)) +
+    geom_col(position = "dodge", alpha = 0.8) +
+    scale_fill_manual(values = c("Observasi" = "#1f77b4", "Teori M/M/1" = "#ff7f0e")) +
+    labs(
+      title = "Perbandingan Waktu Tunggu Observasi vs Teori Model M/M/1",
+      subtitle = "Hanya sesi dengan sistem stabil (ρ < 0.95)",
+      x = "Hari dan Sesi",
+      y = "Waktu Tunggu (menit)",
+      fill = "Jenis Data"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 12),
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    )
+} else {
+ 
+  ggplot(hasil_per_sesi, aes(x = Sesi, y = rho, color = Hari, shape = Hari)) +
+    geom_point(size = 3) +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "red", size = 1) +
+    geom_hline(yintercept = 0.95, linetype = "dotted", color = "orange", size = 0.8) +
+    annotate("text", x = 1, y = 1.05, label = "Sistem Overload (ρ ≥ 1)", color = "red", size = 3) +
+    annotate("text", x = 1, y = 0.9, label = "Sistem Stabil (ρ < 0.95)", color = "darkgreen", size = 3) +
+    labs(
+      title = "Gambar 4: Status Stabilitas Sistem per Sesi",
+      subtitle = "Garis merah: kapasitas maksimal, Garis orange: batas stabilitas perhitungan",
+      x = "Sesi", 
+      y = "Utilisasi Sistem (ρ)",
+      color = "Hari",
+      shape = "Hari"
+    ) +
+    theme_minimal()
+}
+```
+
+```{r}
+# 4. Identifikasi Sesi Overload
+# GAMBAR 5: Heatmap Sederhana untuk Identifikasi Masalah
+hasil_per_sesi <- hasil_per_sesi %>%
+  mutate(
+    Kategori_Beban = case_when(
+      rho >= 1 ~ "Overload (ρ ≥ 1)",
+      rho >= 0.9 ~ "Sangat Padat (0.9 ≤ ρ < 1)",
+      rho >= 0.7 ~ "Padat (0.7 ≤ ρ < 0.9)",
+      TRUE ~ "Normal (ρ < 0.7)"
+    ),
+    Hari = factor(Hari, levels = c("Senin", "Selasa", "Rabu", "Kamis", "Jumat")),
+    Sesi = factor(Sesi, levels = c("Sesi1", "Sesi2", "Sesi3"))
+  )
+
+ggplot(hasil_per_sesi, aes(x = Sesi, y = Hari, fill = Kategori_Beban)) +
+  geom_tile(color = "white", size = 0.8) +
+  geom_text(aes(label = round(rho, 2)), color = "black", size = 4, fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Overload (ρ ≥ 1)" = "red",
+    "Sangat Padat (0.9 ≤ ρ < 1)" = "orange", 
+    "Padat (0.7 ≤ ρ < 0.9)" = "yellow",
+    "Normal (ρ < 0.7)" = "lightgreen"
+  )) +
+  labs(
+    title = "Identifikasi Sesi dengan Beban Terberat",
+    subtitle = "Angka menunjukkan nilai ρ, warna menunjukkan kategori beban sistem",
+    x = "Sesi Pengamatan",
+    y = "Hari",
+    fill = "Kategori Beban"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    axis.text = element_text(size = 10)
+  )
+```
+
+```{r}
+# Analisis
+summary_analysis <- list(
+  total_observasi = nrow(data),
+  sesi_overload = sum(hasil_per_sesi$rho >= 1),
+  sesi_sangat_padat = sum(hasil_per_sesi$rho >= 0.9 & hasil_per_sesi$rho < 1),
+  sesi_terpadat = hasil_per_sesi[which.max(hasil_per_sesi$n_customers), ],
+  rata_rata_waktu_layanan = mean(data$Waktu_Pelayanan_menit)
+)
+
+print(summary_analysis)
+```
+
+
+```{r}
+write_csv(hasil_per_sesi, "hasil_analisis_antrian_bni.csv")
+write_csv(hasil_per_hari, "hasil_analisis_harian_bni.csv")
+```
